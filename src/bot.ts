@@ -46,6 +46,11 @@ function statusMessage(config: BotConfig, status: PollerStatus): string {
       `  last event ledger: ${target.lastEventLedger ?? "none seen"}`,
       `  cursor: \`${target.cursor ?? "none (cold start)"}\``,
     );
+    if (target.cursorStalled) {
+      lines.push(
+        `  cursor stalled: unchanged for ${target.cyclesWithoutAdvance} successful cycles while behind tip`,
+      );
+    }
     if (target.lastError) lines.push(`  last error: ${escapeMd(target.lastError)}`);
   }
 

@@ -44,6 +44,8 @@ function baseStatus(overrides = {}) {
         cursor: "0018276211125911551-4294967295",
         lastEventLedger: 40,
         lastError: null,
+        cyclesWithoutAdvance: 0,
+        cursorStalled: false,
       },
     ],
     ...overrides,
@@ -163,4 +165,34 @@ test("GET /health boundary: first boot before any success stays ok", () => {
   );
   assert.equal(report.ok, true);
   assert.equal(report.status, "ok");
+});
+
+test("buildHealthReport is degraded when a cursor is stalled", () => {
+  const report = buildHealthReport(
+    baseConfig(),
+    baseStatus({
+      targets: [
+        {
+          source: "market",
+          contractId: "CDV6JXIJCALSXQELCS6YUEWJWG5DFXQK5PJ5I7MWI6KVMQJBC5DLPKZI",
+          cursor: "0018276211125911551-4294967295",
+          lastEventLedger: 40,
+          lastError: null,
+          cyclesWithoutAdvance: 5,
+          cursorStalled: true,
+        },
+      ],
+    }),
+    5_500,
+  );
+  assert.equal(report.ok, false);
+  assert.equal(report.status, "degraded");
+  assert.equal(report.poller.targets[0].cursorStalled, true);
+  assert.equal(report.poller.targets[0].cyclesWithoutAdvance, 5);
+});
+
+test("buildHealthReport exposes cursorStalled false for a healthy target", () => {
+  const report = buildHealthReport(baseConfig(), baseStatus(), 5_500);
+  assert.equal(report.poller.targets[0].cursorStalled, false);
+  assert.equal(report.poller.targets[0].cyclesWithoutAdvance, 0);
 });

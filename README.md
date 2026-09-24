@@ -164,6 +164,10 @@ This process is meant to stay up for weeks, so a single failure never ends it:
   the bot was removed from into an infinite replay, and recovery would flood the
   channel. Notifications are lossy on purpose — the chain is the record.
 - **A corrupt cursor file** is treated as a cold start rather than a crash.
+- **A cursor that never advances** while the chain tip keeps moving is detected
+  after several successful cycles: a `CURSOR STALLED` warning is logged, `/status`
+  and `/health` surface the stall, and health goes degraded. Sitting idle at the
+  tip is not a stall. The cursor file is left intact; the bot keeps retrying.
 - **A burst** is capped at `MAX_NOTIFICATIONS_PER_CYCLE` messages per cycle,
   spaced out, so Telegram's rate limiter is never the thing that takes the bot
   down.
